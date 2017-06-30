@@ -11,7 +11,13 @@ public class BasketballController : MonoBehaviour
     Vector2 currentPosition;
     Vector2 startPosition = new Vector2(0, -2);
 
+    SpriteRenderer rimOverlay;
+
     Rigidbody2D basketball;
+
+    BoxCollider2D rim;
+    BoxCollider2D rimLeft;
+    BoxCollider2D rimRight;
 
     public float maxVelocity = 10;
     float gravity = 2;
@@ -22,6 +28,7 @@ public class BasketballController : MonoBehaviour
     float screenBoundRight = 10;
 
     float shotBound = .75F;
+    float rimBound = 1.9F;
 
     bool thrown = false;
 
@@ -29,6 +36,11 @@ public class BasketballController : MonoBehaviour
     {
         basketball = gameObject.GetComponent<Rigidbody2D>();
         basketball.gravityScale = 0;
+
+        rim = GameObject.Find("Rim").GetComponent<BoxCollider2D>();
+        rimRight = GameObject.Find("RimRight").GetComponent<BoxCollider2D>();
+        rimLeft = GameObject.Find("RimLeft").GetComponent<BoxCollider2D>();
+        rimOverlay = GameObject.Find("RimOverlay").GetComponent<SpriteRenderer>();
 
         gameObject.transform.position = startPosition;
         currentPosition = transform.position;
@@ -39,17 +51,25 @@ public class BasketballController : MonoBehaviour
         lastPosition = currentPosition;
         currentPosition = transform.position;
 
-        if (transform.position.y > shotBound)
-            OnMouseUp();
-        else
+        if(thrown)
         {
+            if (!rim.enabled && lastPosition.y - currentPosition.y > 0) // ball has negavtive trajectory
+            {
+                ToggleRim();
+            }
+            else if(rim.enabled && lastPosition.y - currentPosition.y < 0) // ball has positive trajectory
+            {
+                ToggleRim();
+            }
+
             if (transform.position.y < screenBoundBottom)
                 Reset();
             else if (transform.position.x < screenBoundLeft || transform.position.x > screenBoundRight)
                 Reset();
         }
 
-
+        else if (transform.position.y > shotBound) // release ball when dragged past shooting range
+            OnMouseUp();
         
         /* make ball smaller as it goes away
         else
@@ -62,14 +82,35 @@ public class BasketballController : MonoBehaviour
         */
     }
 
+    // ToggleRimColliders() - activates/deactivates rim edge colliders and overlay sprite
+    // called after ball begins rising/falling to allow it to fall into hoop rather than hitting the bottom
+    // TODO: tune rim overlay logic
+    void ToggleRim()
+    {
+        rimLeft.enabled = !rimLeft.enabled;
+        rimRight.enabled = !rimRight.enabled;
+        rim.enabled = !rim.enabled;
+
+        if (rimRight.isActiveAndEnabled)
+            Debug.Log("rim ACTIVATED");
+        else Debug.Log("rim deactivated");
+
+        rimOverlay.enabled = !rimOverlay.enabled;
+    }
+
+    // Reset() - resets game after ball goes out of bounds
     void Reset()
     {
         gameObject.transform.position = startPosition;
         basketball.gravityScale = 0;
         basketball.velocity = Vector2.zero;
         thrown = false;
+
+        ToggleRim();
     }
 
+    // OnMouseDown() - called when player first grabs ball
+    // configures ball to be dragged around by player
     void OnMouseDown()
     {
         if(!thrown)
@@ -85,17 +126,8 @@ public class BasketballController : MonoBehaviour
 
     }
 
-    void OnMouseDrag()
-    {
-        if(!thrown)
-        {
-            Vector2 curScreenPoint = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
-            Vector2 curPosition = (Vector2) Camera.main.ScreenToWorldPoint(curScreenPoint) + offset;
-
-            gameObject.transform.position = curPosition;
-        }
-    }
-
+    // OnMouseUp() - called when player releases ball to be thrown
+    // gives ball tragectory and sets thrown = true
     void OnMouseUp()
     {
         // get direction of movement in last frame
@@ -117,4 +149,17 @@ public class BasketballController : MonoBehaviour
             thrown = true;
         }
     }
+
+    void OnMouseDrag()
+    {
+        if(!thrown)
+        {
+            Vector2 curScreenPoint = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+            Vector2 curPosition = (Vector2) Camera.main.ScreenToWorldPoint(curScreenPoint) + offset;
+
+            gameObject.transform.position = curPosition;
+        }
+    }
+
+
 }
