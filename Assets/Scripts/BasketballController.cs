@@ -21,6 +21,8 @@ public class BasketballController : MonoBehaviour
     float screenBoundLeft = -10;
     float screenBoundRight = 10;
 
+    float shotBound = .75F;
+
     bool thrown = false;
 
     void Start()
@@ -37,10 +39,17 @@ public class BasketballController : MonoBehaviour
         lastPosition = currentPosition;
         currentPosition = transform.position;
 
-        if (transform.position.y < screenBoundBottom)
-            Reset();
-        else if (transform.position.x < screenBoundLeft || transform.position.x > screenBoundRight)
-            Reset();
+        if (transform.position.y > shotBound)
+            OnMouseUp();
+        else
+        {
+            if (transform.position.y < screenBoundBottom)
+                Reset();
+            else if (transform.position.x < screenBoundLeft || transform.position.x > screenBoundRight)
+                Reset();
+        }
+
+
         
         /* make ball smaller as it goes away
         else
@@ -95,7 +104,12 @@ public class BasketballController : MonoBehaviour
         {
             Vector2 velocity = (currentPosition - lastPosition) * 20;
             if (velocity.y > maxVelocity)
-                velocity.y = maxVelocity;
+            {
+                //velocity.y = maxVelocity
+                float yDiff = velocity.y - maxVelocity;
+                velocity.y -= yDiff;
+                //velocity.x -= yDiff;
+            }
 
             basketball.velocity = velocity;
             basketball.gravityScale = gravity; // disable gravity while mouse down
