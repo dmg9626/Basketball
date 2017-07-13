@@ -66,6 +66,7 @@ public class BasketballController : MonoBehaviour
                 Reset();
             else if (transform.position.x < screenBoundLeft || transform.position.x > screenBoundRight)
                 Reset();
+            
         }
 
         else if (transform.position.y > shotBound) // release ball when dragged past shooting range
@@ -105,6 +106,10 @@ public class BasketballController : MonoBehaviour
         basketball.gravityScale = 0;
         basketball.velocity = Vector2.zero;
         thrown = false;
+
+        // freeze rotation after respawning ball
+        basketball.freezeRotation = true;
+        basketball.freezeRotation = false;
 
         ToggleRim();
     }
